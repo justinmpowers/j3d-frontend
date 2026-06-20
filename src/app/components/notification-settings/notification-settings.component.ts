@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -32,7 +32,8 @@ export class NotificationSettingsComponent implements OnInit {
   constructor(
     private printerService: PrinterService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -47,6 +48,7 @@ export class NotificationSettingsComponent implements OnInit {
     this.printerService.getPrinter(id).subscribe({
       next: (printer) => {
         this.printer = printer;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to load printer';
@@ -69,6 +71,7 @@ export class NotificationSettingsComponent implements OnInit {
           webhook_url: notif.webhook_url || ''
         };
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to load notification settings';
@@ -86,6 +89,7 @@ export class NotificationSettingsComponent implements OnInit {
         this.notifications = notif;
         this.successMessage = 'Notification settings saved successfully';
         this.saving = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to save settings: ' + (err.error?.error || err.statusText);

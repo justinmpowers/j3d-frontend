@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,7 +26,8 @@ export class PrintQueueComponent implements OnInit {
   constructor(
     private printerService: PrinterService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -42,6 +43,7 @@ export class PrintQueueComponent implements OnInit {
     this.printerService.getPrinter(id).subscribe({
       next: (printer) => {
         this.printer = printer;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to load printer';
@@ -56,6 +58,7 @@ export class PrintQueueComponent implements OnInit {
         this.prints = prints;
         this.applyFilter();
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to load prints';
@@ -68,6 +71,7 @@ export class PrintQueueComponent implements OnInit {
     this.printerService.getPrintQueue(printerId).subscribe({
       next: (prints) => {
         this.queuePrints = prints;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         // Error handled silently
@@ -108,6 +112,7 @@ export class PrintQueueComponent implements OnInit {
           }
           this.selectedPrint = updated;
           this.successMessage = 'Print marked as failed';
+          this.cdr.detectChanges();
         },
         error: (err) => {
           this.error = 'Failed to update print status';
@@ -128,6 +133,7 @@ export class PrintQueueComponent implements OnInit {
         this.loadQueue(this.printer!.id);
         this.successMessage = `Print status updated to ${status}`;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to update print status: ' + (err.error?.error || err.statusText);
@@ -147,6 +153,7 @@ export class PrintQueueComponent implements OnInit {
           }
           this.successMessage = 'Print job deleted';
           this.loading = false;
+          this.cdr.detectChanges();
         },
         error: (err) => {
           this.error = 'Failed to delete print: ' + (err.error?.error || err.statusText);
