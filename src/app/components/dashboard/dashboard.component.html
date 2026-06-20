@@ -3,6 +3,7 @@
         <div class="header-left">
             <h1>3D Print Management</h1>
             <span class="shop-badge" *ngIf="shopName">{{ shopName }}</span>
+            <span class="version-badge" *ngIf="appVersion">v{{ appVersion }}</span>
         </div>
         <div class="header-actions">
             <span class="user-info" *ngIf="username">Welcome, {{ username }}</span>

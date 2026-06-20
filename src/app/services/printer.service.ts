@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { AuthService } from 'services/auth.service';
 import { environment } from 'environments/environment';
 
@@ -112,7 +112,9 @@ export class PrinterService {
 
   // Printer Management
   getPrinters(): Observable<Printer[]> {
-    return this.http.get<Printer[]>(`${this.apiUrl}/printers`, { headers: this.getHeaders() });
+    return this.http.get<{ printers: Printer[], total: number }>(`${this.apiUrl}/printers`, { headers: this.getHeaders() }).pipe(
+      map((r: { printers: Printer[], total: number }) => r.printers)
+    );
   }
 
   getPrinter(id: number): Observable<Printer> {

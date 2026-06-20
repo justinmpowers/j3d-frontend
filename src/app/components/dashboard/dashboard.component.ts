@@ -12,6 +12,7 @@ import { AnalyticsComponent } from 'components/analytics/analytics.component';
 import { ProductionComponent } from 'components/production/production.component';
 import { PrinterManagementComponent } from 'components/printer-management/printer-management.component';
 import { HttpClient } from '@angular/common/http';
+import { environment } from 'environments/environment';
 
 @Component({
     selector: 'app-dashboard',
@@ -52,6 +53,7 @@ export class DashboardComponent implements OnInit {
     productProfiles: ProductProfile[] = [];
     username: string = '';
     shopName: string = '';
+    appVersion: string = '';
     syncingOrders = false;
     autoSyncComplete = false;
     showAddFilament = false;
@@ -106,6 +108,10 @@ export class DashboardComponent implements OnInit {
                 this.username = user.first_name || user.username;
                 this.shopName = user.shop_name || '';
             }
+        });
+
+        this.http.get<{ status: string; version: string }>(`${environment.apiUrl}/health`).subscribe({
+            next: (r) => this.appVersion = r.version
         });
 
         this.loadOrders();
@@ -580,7 +586,7 @@ export class DashboardComponent implements OnInit {
     }
 
     loadProductProfiles(): void {
-        this.http.get<{ profiles: ProductProfile[], total: number }>('http://localhost:5000/api/product-profiles', {
+        this.http.get<{ profiles: ProductProfile[], total: number }>(`${environment.apiUrl}/product-profiles`, {
             headers: this.authService.getAuthHeaders()
         }).subscribe({
             next: (response) => {
@@ -620,7 +626,7 @@ export class DashboardComponent implements OnInit {
 
     deleteProduct(productId: number): void {
         if (confirm('Are you sure you want to delete this product profile?')) {
-            this.http.delete(`http://localhost:5000/api/product-profiles/${productId}`, {
+            this.http.delete(`${environment.apiUrl}/product-profiles/${productId}`, {
                 headers: this.authService.getAuthHeaders()
             }).subscribe({
                 next: () => {
@@ -636,7 +642,7 @@ export class DashboardComponent implements OnInit {
 
     saveProduct(): void {
         if (this.editingProduct) {
-            this.http.put(`http://localhost:5000/api/product-profiles/${this.editingProduct.id}`, this.productForm, {
+            this.http.put(`${environment.apiUrl}/product-profiles/${this.editingProduct.id}`, this.productForm, {
                 headers: this.authService.getAuthHeaders()
             }).subscribe({
                 next: () => {
@@ -649,7 +655,7 @@ export class DashboardComponent implements OnInit {
                 }
             });
         } else {
-            this.http.post('http://localhost:5000/api/product-profiles', this.productForm, {
+            this.http.post(`${environment.apiUrl}/product-profiles`, this.productForm, {
                 headers: this.authService.getAuthHeaders()
             }).subscribe({
                 next: () => {
