@@ -50,10 +50,15 @@ export class DashboardComponent implements OnInit {
     lowStockFilaments: Filament[] = [];
     printerIssues: string[] = [];
     private printerPollIntervalId: any = null;
+    private dataPollIntervalId: any = null;
     productProfiles: ProductProfile[] = [];
     username: string = '';
     shopName: string = '';
     appVersion: string = '';
+    shopId: number | null = null;
+    showLinkShop = false;
+    linkShopInput = '';
+    linkShopError = '';
     syncingOrders = false;
     autoSyncComplete = false;
     showAddFilament = false;
@@ -104,9 +109,10 @@ export class DashboardComponent implements OnInit {
     ngOnInit(): void {
         this.authService.user$.subscribe(user => {
             if (user) {
-                // Use first_name if available, otherwise fallback to username
                 this.username = user.first_name || user.username;
                 this.shopName = user.shop_name || '';
+                this.shopId = user.shop_id || null;
+                this.showLinkShop = !user.shop_id;
             }
         });
 
@@ -127,6 +133,7 @@ export class DashboardComponent implements OnInit {
 
         // Start periodic printer alert polling
         this.startPrinterAlertPolling();
+        this.startDataPolling();
     }
 
     ngOnDestroy(): void {
@@ -134,6 +141,28 @@ export class DashboardComponent implements OnInit {
             clearInterval(this.printerPollIntervalId);
             this.printerPollIntervalId = null;
         }
+        if (this.dataPollIntervalId) {
+            clearInterval(this.dataPollIntervalId);
+            this.dataPollIntervalId = null;
+        }
+    }
+
+    submitLinkShop(): void {
+        const name = this.linkShopInput.trim();
+        if (!name) return;
+        this.linkShopError = '';
+        const headers = { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}`, 'Content-Type': 'application/json' };
+        this.http.post<{ shop_id: number; shop_name: string }>(`${environment.apiUrl}/auth/link-shop`, { shop_name: name }, { headers }).subscribe({
+            next: (r) => {
+                this.shopId = r.shop_id;
+                this.shopName = r.shop_name;
+                this.showLinkShop = false;
+                this.autoSyncOrders();
+            },
+            error: (e) => {
+                this.linkShopError = e.error?.error || 'Failed to link shop. Check the shop name and try again.';
+            }
+        });
     }
 
     autoSyncOrders(): void {
@@ -256,10 +285,18 @@ export class DashboardComponent implements OnInit {
     }
 
     private startPrinterAlertPolling(): void {
-        // Poll every 60 seconds for printer issues
         this.printerPollIntervalId = setInterval(() => {
             this.checkPrinterAlerts();
         }, 60000);
+    }
+
+    private startDataPolling(): void {
+        // Refresh orders, filaments, and product profiles every 30 seconds
+        this.dataPollIntervalId = setInterval(() => {
+            this.loadOrders();
+            this.loadFilaments();
+            this.loadProductProfiles();
+        }, 30000);
     }
 
     private checkPrinterAlerts(): void {

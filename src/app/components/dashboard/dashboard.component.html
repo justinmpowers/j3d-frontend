@@ -1,3 +1,13 @@
+<div *ngIf="showLinkShop" class="modal-overlay">
+    <div class="modal link-shop-modal">
+        <h2>Link Your Etsy Shop</h2>
+        <p>Enter your Etsy shop name (from <em>etsy.com/shop/<strong>yourshopname</strong></em>) to enable order syncing.</p>
+        <input type="text" [(ngModel)]="linkShopInput" placeholder="yourshopname" (keyup.enter)="submitLinkShop()" />
+        <p *ngIf="linkShopError" class="link-shop-error">{{ linkShopError }}</p>
+        <button class="add-btn" (click)="submitLinkShop()">Link Shop</button>
+    </div>
+</div>
+
 <div class="dashboard">
     <header class="dashboard-header">
         <div class="header-left">
