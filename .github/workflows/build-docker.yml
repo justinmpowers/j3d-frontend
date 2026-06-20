@@ -1,7 +1,7 @@
 name: Build and Push Docker Image
 
 on:
-  pull_request:
+  push:
     branches:
       - main
 
@@ -20,10 +20,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Read VERSION file
+      - name: Compute version
         id: version
         run: |
-          VERSION=$(cat VERSION)
+          BASE=$(cat VERSION)
+          MAJOR=$(echo $BASE | cut -d. -f1)
+          MINOR=$(echo $BASE | cut -d. -f2)
+          VERSION="$MAJOR.$MINOR.${{ github.run_number }}"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
@@ -43,7 +46,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=pr
             type=semver,pattern={{version}},value=${{ steps.version.outputs.VERSION }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.VERSION }}
 
