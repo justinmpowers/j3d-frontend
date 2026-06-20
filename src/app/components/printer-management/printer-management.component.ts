@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -33,7 +33,7 @@ export class PrinterManagementComponent implements OnInit {
   printerTypes = ['octoprint', 'klipper', 'bambu'];
   connectionTypes = ['octoprint', 'klipper', 'bambu_cloud', 'bambu_lan'];
 
-  constructor(private printerService: PrinterService) {}
+  constructor(private printerService: PrinterService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadPrinters();
@@ -45,6 +45,7 @@ export class PrinterManagementComponent implements OnInit {
       next: (data) => {
         this.printers = data;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to load printers';
@@ -102,6 +103,7 @@ export class PrinterManagementComponent implements OnInit {
         this.isAdding = false;
         this.loading = false;
         this.resetForm();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to create printer: ' + (err.error?.error || err.statusText);
@@ -134,6 +136,7 @@ export class PrinterManagementComponent implements OnInit {
         this.isEditing = false;
         this.loading = false;
         this.resetForm();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to update printer: ' + (err.error?.error || err.statusText);
@@ -153,6 +156,7 @@ export class PrinterManagementComponent implements OnInit {
           }
           this.successMessage = 'Printer deleted successfully';
           this.loading = false;
+          this.cdr.detectChanges();
         },
         error: (err) => {
           this.error = 'Failed to delete printer: ' + (err.error?.error || err.statusText);

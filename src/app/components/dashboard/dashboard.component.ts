@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -98,7 +98,8 @@ export class DashboardComponent implements OnInit {
         private router: Router,
         private http: HttpClient,
             private printerService: PrinterService,
-            private alertsService: AlertsService
+            private alertsService: AlertsService,
+            private cdr: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
@@ -107,11 +108,12 @@ export class DashboardComponent implements OnInit {
                 // Use first_name if available, otherwise fallback to username
                 this.username = user.first_name || user.username;
                 this.shopName = user.shop_name || '';
+                this.cdr.detectChanges();
             }
         });
 
         this.http.get<{ status: string; version: string }>(`${environment.apiUrl}/health`).subscribe({
-            next: (r) => this.appVersion = r.version
+            next: (r) => { this.appVersion = r.version; this.cdr.detectChanges(); }
         });
 
         this.loadOrders();
@@ -172,6 +174,7 @@ export class DashboardComponent implements OnInit {
                     if (!this.commDrafts[o.id]) this.commDrafts[o.id] = { message: '', direction: 'outbound', channel: 'message' };
                     if (!this.labelDrafts[o.id]) this.labelDrafts[o.id] = { provider: o.shipping_provider || 'manual', tracking: o.tracking_number || '' };
                 });
+                this.cdr.detectChanges();
             },
             (error) => {
                 console.error('Error loading orders:', error);
@@ -241,6 +244,7 @@ export class DashboardComponent implements OnInit {
             (response) => {
                 this.filaments = response.filaments;
                 this.lowStockFilaments = this.filaments.filter(f => f.is_low_stock || (typeof f.low_stock_threshold === 'number' && f.current_amount <= f.low_stock_threshold));
+                this.cdr.detectChanges();
             },
             (error) => {
                 console.error('Error loading filaments:', error);
@@ -270,6 +274,7 @@ export class DashboardComponent implements OnInit {
                     return s.includes('error') || s.includes('fail') || s.includes('fault') || s.includes('offline');
                 });
                 this.printerIssues = problematic.map(p => p.name || `Printer #${p.id}`);
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 // Non-blocking: do not surface to UI
@@ -306,6 +311,7 @@ export class DashboardComponent implements OnInit {
         this.alertsService.getSettings().subscribe({
             next: (settings) => {
                 this.alertSettings = settings || this.alertSettings;
+                this.cdr.detectChanges();
             },
             error: (err) => console.error('Failed to load alert settings', err)
         });
@@ -318,6 +324,7 @@ export class DashboardComponent implements OnInit {
                 this.alertSettings = settings;
                 this.savingAlertSettings = false;
                 alert('Alert settings saved');
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Failed to save alert settings', err);
@@ -329,7 +336,7 @@ export class DashboardComponent implements OnInit {
 
     loadAlertPreview(): void {
         this.alertsService.preview().subscribe({
-            next: (data) => this.alertPreview = data,
+            next: (data) => { this.alertPreview = data; this.cdr.detectChanges(); },
             error: (err) => console.error('Failed to load alert preview', err)
         });
     }
@@ -341,6 +348,7 @@ export class DashboardComponent implements OnInit {
                 this.triggeringAlerts = false;
                 const ch = (res.channels || []).join(', ') || 'none';
                 alert(`Alerts sent: ${res.sent ? 'yes' : 'no'} (channels: ${ch})`);
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Failed to trigger alerts', err);
@@ -426,6 +434,7 @@ export class DashboardComponent implements OnInit {
                 this.noteDrafts[order.id] = '';
                 if (!this.notesCache[order.id]) this.notesCache[order.id] = [];
                 this.notesCache[order.id].unshift(note);
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Failed to add note', err);
@@ -439,6 +448,7 @@ export class DashboardComponent implements OnInit {
         this.orderService.listNotes(order.id).subscribe({
             next: (res) => {
                 this.notesCache[order.id] = res.notes;
+                this.cdr.detectChanges();
             },
             error: (err) => console.error('Failed to load notes', err)
         });
@@ -456,6 +466,7 @@ export class DashboardComponent implements OnInit {
                 this.commCache[order.id].unshift(log);
                 this.commDrafts[order.id] = { message: '', direction: 'outbound', channel: 'message' };
                 this.loadOrders();
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Failed to add communication', err);
@@ -467,7 +478,7 @@ export class DashboardComponent implements OnInit {
     loadCommunications(order: Order): void {
         if (this.commCache[order.id]) return;
         this.orderService.listCommunications(order.id).subscribe({
-            next: (res) => this.commCache[order.id] = res.logs,
+            next: (res) => { this.commCache[order.id] = res.logs; this.cdr.detectChanges(); },
             error: (err) => console.error('Failed to load communications', err)
         });
     }
@@ -487,6 +498,7 @@ export class DashboardComponent implements OnInit {
             next: (res) => {
                 order.photo_url = res.photo_url;
                 this.photoFiles[order.id] = null;
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Photo upload failed', err);
@@ -504,6 +516,7 @@ export class DashboardComponent implements OnInit {
         }).subscribe({
             next: (updated) => {
                 Object.assign(order, updated);
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Shipping label save failed', err);
@@ -591,6 +604,7 @@ export class DashboardComponent implements OnInit {
         }).subscribe({
             next: (response) => {
                 this.productProfiles = response.profiles;
+                this.cdr.detectChanges();
             },
             error: (error) => {
                 console.error('Error loading product profiles:', error);

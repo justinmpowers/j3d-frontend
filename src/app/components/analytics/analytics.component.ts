@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AnalyticsService, AnalyticsSummary, RevenueTrends, ProductPerformanceResponse } from '../../services/analytics.service';
@@ -18,7 +18,7 @@ export class AnalyticsComponent implements OnInit {
   loading = true;
   error: string | null = null;
 
-  constructor(private analyticsService: AnalyticsService) { }
+  constructor(private analyticsService: AnalyticsService, private cdr: ChangeDetectorRef) { }
 
   ngOnInit(): void {
     this.loadAnalytics();
@@ -32,6 +32,7 @@ export class AnalyticsComponent implements OnInit {
     this.analyticsService.getSummary().subscribe({
       next: (data) => {
         this.summary = data;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading summary:', error);
@@ -46,6 +47,7 @@ export class AnalyticsComponent implements OnInit {
       next: (data) => {
         this.productPerformance = data;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading product performance:', error);
@@ -59,6 +61,7 @@ export class AnalyticsComponent implements OnInit {
     this.analyticsService.getRevenueTrends(this.selectedPeriod).subscribe({
       next: (data) => {
         this.revenueTrends = data;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading revenue trends:', error);
