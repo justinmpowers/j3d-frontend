@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -39,7 +39,7 @@ export class PrinterManagementComponent implements OnInit, OnDestroy {
   printerTypes = ['octoprint', 'klipper', 'bambu'];
   connectionTypes = ['octoprint', 'klipper', 'bambu_cloud', 'bambu_lan'];
 
-  constructor(private printerService: PrinterService) {}
+  constructor(private printerService: PrinterService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadPrinters();
@@ -55,11 +55,11 @@ export class PrinterManagementComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.printers = data;
         this.loading = false;
-        // Refresh selected printer data if one is selected
         if (this.selectedPrinter) {
           const updated = data.find(p => p.id === this.selectedPrinter!.id);
           if (updated) this.selectedPrinter = updated;
         }
+        this.cdr.detectChanges();
       },
       error: () => {
         this.error = 'Failed to load printers';
@@ -102,10 +102,10 @@ export class PrinterManagementComponent implements OnInit, OnDestroy {
       next: (status) => {
         this.liveStatus = status;
         this.statusLoading = false;
-        // Update connection status on the printer object
         if (this.selectedPrinter) {
           this.selectedPrinter.connection_status = 'connected';
         }
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.statusLoading = false;
@@ -172,6 +172,7 @@ export class PrinterManagementComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.resetForm();
         this.selectPrinter(printer);
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to create printer: ' + (err.error?.error || err.statusText);
@@ -202,6 +203,7 @@ export class PrinterManagementComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.resetForm();
         this.startStatusPolling();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to update printer: ' + (err.error?.error || err.statusText);
@@ -223,6 +225,7 @@ export class PrinterManagementComponent implements OnInit, OnDestroy {
         }
         this.successMessage = 'Printer deleted';
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to delete printer: ' + (err.error?.error || err.statusText);

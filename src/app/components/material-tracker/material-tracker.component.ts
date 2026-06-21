@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -35,7 +35,8 @@ export class MaterialTrackerComponent implements OnInit {
   constructor(
     private printerService: PrinterService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -50,6 +51,7 @@ export class MaterialTrackerComponent implements OnInit {
     this.printerService.getPrinter(id).subscribe({
       next: (printer) => {
         this.printer = printer;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to load printer';
@@ -63,6 +65,7 @@ export class MaterialTrackerComponent implements OnInit {
       next: (materials) => {
         this.materials = materials;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to load materials';
@@ -99,6 +102,7 @@ export class MaterialTrackerComponent implements OnInit {
         this.isAdding = false;
         this.loading = false;
         this.resetForm();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to add material: ' + (err.error?.error || err.statusText);
@@ -124,6 +128,7 @@ export class MaterialTrackerComponent implements OnInit {
         this.selectedMaterial = material;
         this.successMessage = 'Material updated successfully';
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to update material: ' + (err.error?.error || err.statusText);

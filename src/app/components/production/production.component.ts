@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductionService } from '../../services/production.service';
@@ -32,7 +32,7 @@ export class ProductionComponent implements OnInit {
   editedPrintTime: number | null = null;
   editedNotes: string = '';
 
-  constructor(private productionService: ProductionService) {}
+  constructor(private productionService: ProductionService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadProductionQueue();
@@ -47,6 +47,7 @@ export class ProductionComponent implements OnInit {
       next: (response) => {
         this.orders = response.orders;
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.error = 'Failed to load production queue';
@@ -59,6 +60,7 @@ export class ProductionComponent implements OnInit {
     this.productionService.getPrintSessions().subscribe({
       next: (response) => {
         this.sessions = response.sessions;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         // Error handled silently
@@ -114,6 +116,7 @@ export class ProductionComponent implements OnInit {
         if (index !== -1) {
           this.orders[index] = updated;
         }
+        this.cdr.detectChanges();
       },
       error: (err) => {
         alert('Failed to update status');
@@ -130,7 +133,8 @@ export class ProductionComponent implements OnInit {
           if (index !== -1) {
             this.orders[index] = updated;
           }
-          this.loadProductionQueue(); // Reload to get correct sorting
+          this.loadProductionQueue();
+          this.cdr.detectChanges();
         },
         error: (err) => {
           alert('Failed to update priority');
@@ -185,7 +189,8 @@ export class ProductionComponent implements OnInit {
         this.sessions.unshift(session);
         this.closeSessionModal();
         this.clearSelection();
-        this.loadProductionQueue(); // Refresh to show updated session assignments
+        this.loadProductionQueue();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         alert('Failed to create session');
