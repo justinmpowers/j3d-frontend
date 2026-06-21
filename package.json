@@ -1,6 +1,6 @@
 {
   "name": "j3d-frontend",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "J3D - Etsy Orders & Filament Tracker",
   "scripts": {
     "ng": "ng",

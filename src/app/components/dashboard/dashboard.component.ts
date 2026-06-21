@@ -324,7 +324,14 @@ export class DashboardComponent implements OnInit {
 
     // ===== Alerts integration =====
     showAlertSettings = false;
-    alertSettings: AlertSettings = { slack_webhook_url: '', discord_webhook_url: '', email_enabled: false, email_to: '' };
+    alertSettings: AlertSettings = {
+        slack_webhook_url: '',
+        discord_webhook_url: '',
+        email_enabled: false,
+        email_to: '',
+        telegram_bot_token: '',
+        telegram_chat_id: '',
+    };
     alertPreview: { low_stock: any[]; printer_issues: any[] } | null = null;
     triggeringAlerts = false;
     savingAlertSettings = false;

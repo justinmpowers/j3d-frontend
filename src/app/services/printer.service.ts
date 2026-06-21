@@ -8,12 +8,15 @@ export interface Printer {
   id: number;
   user_id: number;
   name: string;
-  type: string; // 'octoprint' | 'klipper' | 'bambu'
+  model?: string;
+  location?: string;
+  notes?: string;
+  // Connection fields (populated from PrinterConnection via backend)
+  connection_id?: number;
   connection_type?: string; // 'octoprint' | 'klipper' | 'bambu_cloud' | 'bambu_lan'
+  connection_status?: string; // 'connected' | 'disconnected' | 'error'
   api_url?: string;
-  api_key?: string;
   serial_number?: string;
-  access_code?: string;
   status?: string;
   current_job?: string;
   utilization_pct?: number;
