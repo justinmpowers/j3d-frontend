@@ -112,7 +112,7 @@ export class DashboardComponent implements OnInit {
             if (user) {
                 this.username = user.first_name || user.username;
                 this.shopName = user.shop_name || '';
-                this.shopId = user.shop_id || null;
+                this.shopId = user.shop_id ? Number(user.shop_id) : null;
                 this.showLinkShop = !user.shop_id;
                 this.cdr.detectChanges();
             }
