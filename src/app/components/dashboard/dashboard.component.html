@@ -1,3 +1,13 @@
+<div *ngIf="showLinkShop" class="modal-overlay">
+    <div class="modal link-shop-modal">
+        <h2>Link Your Etsy Shop</h2>
+        <p>Enter your Etsy shop name (from <em>etsy.com/shop/<strong>yourshopname</strong></em>) to enable order syncing.</p>
+        <input type="text" [(ngModel)]="linkShopInput" placeholder="yourshopname" (keyup.enter)="submitLinkShop()" />
+        <p *ngIf="linkShopError" class="link-shop-error">{{ linkShopError }}</p>
+        <button class="add-btn" (click)="submitLinkShop()">Link Shop</button>
+    </div>
+</div>
+
 <div class="dashboard">
     <header class="dashboard-header">
         <div class="header-left">
@@ -483,6 +493,24 @@
                 <label>Email To</label>
                 <input type="email" [(ngModel)]="alertSettings.email_to" name="email_to" placeholder="you@example.com">
                 <small>Configure SMTP in backend environment (SMTP_HOST/PORT/USER/PASS)</small>
+            </div>
+
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+
+            <div class="form-group">
+                <label>Telegram Bot Token</label>
+                <input type="password" [(ngModel)]="alertSettings.telegram_bot_token" name="telegram_bot_token"
+                       placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11">
+                <small>Create a bot via @BotFather on Telegram, then paste the token here.</small>
+            </div>
+            <div class="form-group">
+                <label>Telegram Chat ID</label>
+                <input type="text" [(ngModel)]="alertSettings.telegram_chat_id" name="telegram_chat_id"
+                       placeholder="-1001234567890 or your user ID">
+                <small>Get your chat ID by messaging @userinfobot or @getidsbot on Telegram.</small>
+            </div>
+            <div *ngIf="alertSettings.telegram_enabled" class="form-group">
+                <span style="color:#10b981;font-weight:600">✓ Telegram configured</span>
             </div>
 
             <div class="form-actions">

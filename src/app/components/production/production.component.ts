@@ -133,7 +133,7 @@ export class ProductionComponent implements OnInit {
           if (index !== -1) {
             this.orders[index] = updated;
           }
-          this.loadProductionQueue(); // Reload to get correct sorting
+          this.loadProductionQueue();
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -189,7 +189,7 @@ export class ProductionComponent implements OnInit {
         this.sessions.unshift(session);
         this.closeSessionModal();
         this.clearSelection();
-        this.loadProductionQueue(); // Refresh to show updated session assignments
+        this.loadProductionQueue();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -213,7 +213,6 @@ export class ProductionComponent implements OnInit {
           if (index !== -1) {
             this.orders[index] = updated;
           }
-          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Failed to update print time', err);
@@ -232,7 +231,6 @@ export class ProductionComponent implements OnInit {
           if (index !== -1) {
             this.orders[index] = updated;
           }
-          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Failed to update notes', err);

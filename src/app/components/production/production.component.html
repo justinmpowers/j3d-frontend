@@ -116,15 +116,16 @@
             </div>
           </td>
           <td>
-            <select 
-              class="status-select" 
-              [class]="getStatusClass(order.production_status)"
+            <select
+              class="status-select"
+              [ngClass]="getStatusClass(order.production_status)"
               [value]="order.production_status"
               (change)="updateStatus(order, $any($event.target).value)"
             >
               <option value="QUEUED">Queued</option>
               <option value="PRINTING">Printing</option>
               <option value="PRINTED">Printed</option>
+              <option value="SHIPPED">Shipped</option>
               <option value="FAILED">Failed</option>
             </select>
           </td>

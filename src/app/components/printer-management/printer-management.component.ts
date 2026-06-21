@@ -1,8 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { PrinterService, Printer } from '../../services/printer.service';
+import { PrinterService, Printer, PrinterStatus } from '../../services/printer.service';
 
 @Component({
   selector: 'app-printer-management',
@@ -11,7 +11,7 @@ import { PrinterService, Printer } from '../../services/printer.service';
   templateUrl: './printer-management.component.html',
   styleUrls: ['./printer-management.component.scss']
 })
-export class PrinterManagementComponent implements OnInit {
+export class PrinterManagementComponent implements OnInit, OnDestroy {
   printers: Printer[] = [];
   selectedPrinter: Printer | null = null;
   isAdding = false;
@@ -20,15 +20,21 @@ export class PrinterManagementComponent implements OnInit {
   error: string | null = null;
   successMessage: string | null = null;
 
-  newPrinter: Partial<Printer> = {
+  liveStatus: PrinterStatus | null = null;
+  statusLoading = false;
+  statusError: string | null = null;
+  private statusPollInterval: any = null;
+
+  newPrinter: Partial<Printer> & { api_key?: string; access_code?: string } = {
     name: '',
-    type: 'bambu',
     connection_type: 'bambu_cloud',
     api_url: '',
-    api_key: '',
     serial_number: '',
-    access_code: ''
   };
+
+  // Separate fields not on the Printer interface (credentials)
+  formApiKey = '';
+  formAccessCode = '';
 
   printerTypes = ['octoprint', 'klipper', 'bambu'];
   connectionTypes = ['octoprint', 'klipper', 'bambu_cloud', 'bambu_lan'];
@@ -39,15 +45,23 @@ export class PrinterManagementComponent implements OnInit {
     this.loadPrinters();
   }
 
+  ngOnDestroy(): void {
+    this.stopStatusPolling();
+  }
+
   loadPrinters(): void {
     this.loading = true;
     this.printerService.getPrinters().subscribe({
       next: (data) => {
         this.printers = data;
         this.loading = false;
+        if (this.selectedPrinter) {
+          const updated = data.find(p => p.id === this.selectedPrinter!.id);
+          if (updated) this.selectedPrinter = updated;
+        }
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: () => {
         this.error = 'Failed to load printers';
         this.loading = false;
       }
@@ -58,26 +72,71 @@ export class PrinterManagementComponent implements OnInit {
     this.selectedPrinter = printer;
     this.isAdding = false;
     this.isEditing = false;
+    this.liveStatus = null;
+    this.statusError = null;
+    this.startStatusPolling();
+  }
+
+  startStatusPolling(): void {
+    this.stopStatusPolling();
+    if (!this.selectedPrinter?.connection_id) return;
+    this.refreshStatus();
+    this.statusPollInterval = setInterval(() => this.refreshStatus(), 30000);
+  }
+
+  stopStatusPolling(): void {
+    if (this.statusPollInterval) {
+      clearInterval(this.statusPollInterval);
+      this.statusPollInterval = null;
+    }
+  }
+
+  refreshStatus(): void {
+    if (!this.selectedPrinter?.connection_id) {
+      this.statusError = 'No connection configured for this printer.';
+      return;
+    }
+    this.statusLoading = true;
+    this.statusError = null;
+    this.printerService.getPrinterStatus(this.selectedPrinter.connection_id).subscribe({
+      next: (status) => {
+        this.liveStatus = status;
+        this.statusLoading = false;
+        if (this.selectedPrinter) {
+          this.selectedPrinter.connection_status = 'connected';
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.statusLoading = false;
+        const msg = err.error?.error || 'Could not reach printer';
+        this.statusError = msg;
+        if (this.selectedPrinter) {
+          this.selectedPrinter.connection_status = 'error';
+        }
+      }
+    });
   }
 
   startAdding(): void {
     this.isAdding = true;
     this.isEditing = false;
     this.selectedPrinter = null;
-    this.newPrinter = {
-      name: '',
-      type: 'bambu',
-      connection_type: 'bambu_cloud',
-      api_url: '',
-      api_key: '',
-      serial_number: '',
-      access_code: ''
-    };
+    this.stopStatusPolling();
+    this.resetForm();
   }
 
   startEditing(): void {
     if (this.selectedPrinter) {
       this.isEditing = true;
+      this.newPrinter = {
+        name: this.selectedPrinter.name,
+        connection_type: this.selectedPrinter.connection_type || 'bambu_cloud',
+        api_url: this.selectedPrinter.api_url || '',
+        serial_number: this.selectedPrinter.serial_number || '',
+      };
+      this.formApiKey = '';
+      this.formAccessCode = '';
     }
   }
 
@@ -95,14 +154,24 @@ export class PrinterManagementComponent implements OnInit {
       return;
     }
 
+    const payload: any = {
+      name: this.newPrinter.name,
+      connection_type: this.newPrinter.connection_type,
+      api_url: this.newPrinter.api_url,
+      serial_number: this.newPrinter.serial_number,
+      api_key: this.formApiKey || undefined,
+      access_code: this.formAccessCode || undefined,
+    };
+
     this.loading = true;
-    this.printerService.createPrinter(this.newPrinter).subscribe({
+    this.printerService.createPrinter(payload).subscribe({
       next: (printer) => {
         this.printers.push(printer);
         this.successMessage = 'Printer created successfully';
         this.isAdding = false;
         this.loading = false;
         this.resetForm();
+        this.selectPrinter(printer);
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -115,27 +184,25 @@ export class PrinterManagementComponent implements OnInit {
   updatePrinter(): void {
     if (!this.selectedPrinter) return;
 
-    const updates: Partial<Printer> = {};
+    const updates: any = {};
     if (this.newPrinter.name) updates.name = this.newPrinter.name;
-    if (this.newPrinter.type) updates.type = this.newPrinter.type;
     if (this.newPrinter.connection_type) updates.connection_type = this.newPrinter.connection_type;
     if (this.newPrinter.api_url) updates.api_url = this.newPrinter.api_url;
-    if (this.newPrinter.api_key) updates.api_key = this.newPrinter.api_key;
     if (this.newPrinter.serial_number) updates.serial_number = this.newPrinter.serial_number;
-    if (this.newPrinter.access_code) updates.access_code = this.newPrinter.access_code;
+    if (this.formApiKey) updates.api_key = this.formApiKey;
+    if (this.formAccessCode) updates.access_code = this.formAccessCode;
 
     this.loading = true;
     this.printerService.updatePrinter(this.selectedPrinter.id, updates).subscribe({
       next: (printer) => {
         const index = this.printers.findIndex(p => p.id === printer.id);
-        if (index !== -1) {
-          this.printers[index] = printer;
-        }
+        if (index !== -1) this.printers[index] = printer;
         this.selectedPrinter = printer;
         this.successMessage = 'Printer updated successfully';
         this.isEditing = false;
         this.loading = false;
         this.resetForm();
+        this.startStatusPolling();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -146,42 +213,60 @@ export class PrinterManagementComponent implements OnInit {
   }
 
   deletePrinter(printer: Printer): void {
-    if (confirm(`Are you sure you want to delete "${printer.name}"?`)) {
-      this.loading = true;
-      this.printerService.deletePrinter(printer.id).subscribe({
-        next: () => {
-          this.printers = this.printers.filter(p => p.id !== printer.id);
-          if (this.selectedPrinter?.id === printer.id) {
-            this.selectedPrinter = null;
-          }
-          this.successMessage = 'Printer deleted successfully';
-          this.loading = false;
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.error = 'Failed to delete printer: ' + (err.error?.error || err.statusText);
-          this.loading = false;
+    if (!confirm(`Delete "${printer.name}"? This cannot be undone.`)) return;
+    this.loading = true;
+    this.printerService.deletePrinter(printer.id).subscribe({
+      next: () => {
+        this.printers = this.printers.filter(p => p.id !== printer.id);
+        if (this.selectedPrinter?.id === printer.id) {
+          this.selectedPrinter = null;
+          this.liveStatus = null;
+          this.stopStatusPolling();
         }
-      });
-    }
+        this.successMessage = 'Printer deleted';
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.error = 'Failed to delete printer: ' + (err.error?.error || err.statusText);
+        this.loading = false;
+      }
+    });
   }
 
   cancel(): void {
     this.isAdding = false;
     this.isEditing = false;
     this.resetForm();
+    if (this.selectedPrinter) this.startStatusPolling();
   }
 
   resetForm(): void {
-    this.newPrinter = {
-      name: '',
-      type: 'bambu',
-      connection_type: 'bambu_cloud'
-    };
+    this.newPrinter = { name: '', connection_type: 'bambu_cloud', api_url: '', serial_number: '' };
+    this.formApiKey = '';
+    this.formAccessCode = '';
   }
 
   clearMessages(): void {
     this.error = null;
     this.successMessage = null;
+  }
+
+  getConnectionLabel(type: string | undefined): string {
+    const labels: Record<string, string> = {
+      bambu_cloud: 'Bambu Cloud',
+      bambu_lan: 'Bambu LAN',
+      octoprint: 'OctoPrint',
+      klipper: 'Klipper / Moonraker',
+    };
+    return labels[type || ''] || type || 'Unknown';
+  }
+
+  getStatusDotClass(status: string | undefined): string {
+    switch (status) {
+      case 'connected': return 'dot-green';
+      case 'error': return 'dot-red';
+      default: return 'dot-gray';
+    }
   }
 }
