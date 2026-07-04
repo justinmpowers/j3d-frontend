@@ -83,6 +83,12 @@
                      placeholder="http://192.168.1.100">
             </div>
             <div class="field">
+              <label>Serial Number *</label>
+              <input type="text" [(ngModel)]="newPrinter.serial_number" name="lan_serial_number"
+                     placeholder="Printer serial number (e.g. 01S00A123456789)">
+              <small>Printer screen → Settings → Device, or the label on the printer</small>
+            </div>
+            <div class="field">
               <label>Access Code *</label>
               <input type="password" [(ngModel)]="formAccessCode" name="access_code"
                      placeholder="LAN access code from printer screen">
@@ -169,8 +175,8 @@
 
           <!-- Bambu LAN note -->
           <div *ngIf="selectedPrinter.connection_type === 'bambu_lan'" class="info-note">
-            Bambu printers use MQTT for LAN communication. HTTP status polling may not be
-            available on all firmware versions.
+            Connects over MQTTS (port 8883). Make sure LAN-only mode is enabled on the printer
+            (Settings → Network → LAN Only), and that this server can reach the printer's IP.
           </div>
         </div>
 
