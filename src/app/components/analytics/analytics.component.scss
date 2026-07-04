@@ -174,7 +174,10 @@
 
 .bar-chart {
   display: flex;
-  align-items: flex-end;
+  // stretch (not flex-end): .bar-group needs a real height for its .bars
+  // child's height:100% to resolve against, otherwise every bar computes
+  // to 0px regardless of [style.height.%].
+  align-items: stretch;
   justify-content: space-between;
   height: 300px;
   padding: 1rem;
@@ -196,7 +199,10 @@
     display: flex;
     gap: 6px;
     width: 100%;
-    height: 100%;
+    // flex: 1 (not height: 100%) so it shares .bar-group's height with the
+    // label/order-count text below it, instead of overflowing past them.
+    flex: 1;
+    min-height: 0;
     align-items: flex-end;
     justify-content: center;
   }
