@@ -181,7 +181,7 @@
 .priority-high    { background: var(--warning); color: #fff; }
 .priority-medium  { background: var(--primary); color: #fff; }
 .priority-low     { background: var(--success); color: #fff; }
-.priority-backlog { background: #94a3b8; color: #fff; }
+.priority-backlog { background: var(--text-light); color: #fff; }
 
 .priority-controls {
   display: flex;
@@ -204,7 +204,7 @@
   &:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); }
 }
 
-.status-queued   { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.status-queued   { background: var(--warning-light); color: #92400e; border-color: #fcd34d; }
 .status-printing { background: var(--info-light); color: #0c4a6e; border-color: #7dd3fc; animation: pulse-anim 2s ease infinite; }
 .status-printed  { background: var(--success-light); color: #065f46; border-color: #6ee7b7; }
 .status-shipped  { background: #f3e8ff; color: #6b21a8; border-color: #d8b4fe; }
@@ -374,7 +374,7 @@
   &.status-planned     { background: var(--warning-light); color: #92400e; }
   &.status-in_progress { background: var(--info-light);    color: #0c4a6e; }
   &.status-completed   { background: var(--success-light); color: #065f46; }
-  &.status-paused      { background: #f1f5f9; color: #475569; }
+  &.status-paused      { background: var(--bg); color: #475569; }
 }
 
 .session-details {

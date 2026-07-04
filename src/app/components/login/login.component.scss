@@ -111,6 +111,21 @@
   margin-top: 20px;
 }
 
+.idle-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--info-light);
+  color: #0c4a6e;
+  border: 1px solid #7dd3fc;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
 .error-msg {
   display: flex;
   align-items: center;

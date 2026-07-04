@@ -42,6 +42,9 @@
         <button class="nav-btn" [class.active]="activeTab === 'analytics'" (click)="activeTab = 'analytics'">
             Analytics
         </button>
+        <button class="nav-btn" [class.active]="activeTab === 'integrations'" (click)="activeTab = 'integrations'">
+            Integrations
+        </button>
     </nav>
 
     <!-- Alerts Bar -->
@@ -252,7 +255,16 @@
         <section *ngIf="activeTab === 'products'" class="products-section">
             <div class="section-header">
                 <h2>Product Templates</h2>
-                <button class="add-btn" (click)="showAddProduct = true">Add Product</button>
+                <div class="header-actions">
+                    <button class="sync-btn" (click)="syncEtsyListings()" [disabled]="syncingProducts">
+                        {{ syncingProducts ? 'Syncing...' : 'Sync from Etsy' }}
+                    </button>
+                    <button class="add-btn" (click)="showAddProduct = true">Add Product</button>
+                </div>
+            </div>
+
+            <div *ngIf="etsyNeedsReconnect" class="alert-warning">
+                Etsy listings sync needs additional permission. <button class="link-btn" (click)="reconnectEtsy()">Reconnect Etsy</button> to grant access.
             </div>
 
             <div *ngIf="productProfiles.length > 0" class="products-grid">
@@ -263,6 +275,20 @@
                             <button class="edit-btn" (click)="editProduct(product)">Edit</button>
                             <button class="delete-btn" (click)="deleteProduct(product.id)">Delete</button>
                         </div>
+                    </div>
+                    <div *ngIf="product.etsy_listing_id" class="etsy-linked">
+                        <img *ngIf="product.etsy_thumbnail_url" [src]="product.etsy_thumbnail_url" alt="" class="etsy-thumb">
+                        <a [href]="product.etsy_url" target="_blank" rel="noopener" class="badge-info">Etsy listing</a>
+                        <span *ngIf="product.etsy_price">${{ product.etsy_price }}</span>
+                    </div>
+                    <div class="manyfold-link-row">
+                        <ng-container *ngIf="product.manyfold_model_id; else noManyfoldLink">
+                            <a [href]="product.manyfold_model_url" target="_blank" rel="noopener" class="badge-info">Manyfold model</a>
+                            <button class="link-btn" (click)="unlinkManyfold(product)">Unlink</button>
+                        </ng-container>
+                        <ng-template #noManyfoldLink>
+                            <button class="link-btn" [disabled]="!manyfoldSettings.base_url" (click)="openManyfoldPicker(product)">Link to Manyfold</button>
+                        </ng-template>
                     </div>
                     <p *ngIf="product.description"><strong>Description:</strong> {{ product.description }}</p>
                     <p *ngIf="product.category"><strong>Category:</strong> {{ product.category }}</p>
@@ -303,7 +329,40 @@
         <section *ngIf="activeTab === 'analytics'" class="analytics-section">
             <app-analytics></app-analytics>
         </section>
+
+        <!-- Integrations Section -->
+        <section *ngIf="activeTab === 'integrations'" class="integrations-section">
+            <div class="section-header">
+                <h2>Manyfold</h2>
+            </div>
+            <p class="picker-hint">Connect a self-hosted Manyfold instance to link product templates to their 3D model source. Create an OAuth application at <code>&lt;your-manyfold-url&gt;/oauth/applications</code> to get a client ID and secret.</p>
+            <div class="manyfold-settings-form">
+                <div class="form-group">
+                    <label>Manyfold URL</label>
+                    <input type="text" [(ngModel)]="manyfoldForm.base_url" name="manyfold_base_url" placeholder="https://manyfold.example.com">
+                </div>
+                <div class="form-group">
+                    <label>Client ID</label>
+                    <input type="text" [(ngModel)]="manyfoldForm.client_id" name="manyfold_client_id">
+                </div>
+                <div class="form-group">
+                    <label>Client Secret {{ manyfoldSettings.has_client_secret ? '(leave blank to keep current)' : '' }}</label>
+                    <input type="password" [(ngModel)]="manyfoldForm.client_secret" name="manyfold_client_secret">
+                </div>
+                <button class="btn btn-primary" [disabled]="savingManyfoldSettings" (click)="saveManyfoldSettings()">
+                    {{ savingManyfoldSettings ? 'Saving...' : 'Save Manyfold Settings' }}
+                </button>
+            </div>
+        </section>
     </main>
+
+    <app-manyfold-picker
+        *ngIf="linkingProduct"
+        [productId]="linkingProduct.id"
+        [baseUrl]="manyfoldSettings.base_url || ''"
+        (linked)="onManyfoldLinked()"
+        (closed)="closeManyfoldPicker()">
+    </app-manyfold-picker>
 </div>
 
 <!-- Add/Edit Product Modal -->
