@@ -85,6 +85,28 @@
   &:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 
+// .sync-btn/.add-btn are styled for the dark header bar above (translucent
+// white on purple). Reused inside .dashboard-content's light section headers,
+// that same styling renders as near-invisible white-on-white — override with
+// colors appropriate for a light background, keeping the tuned sizing.
+.dashboard-content {
+  .add-btn {
+    background: var(--primary);
+    color: #fff;
+    border: 1px solid var(--primary);
+
+    &:hover:not(:disabled) { background: var(--primary-dark); border-color: var(--primary-dark); }
+  }
+
+  .sync-btn {
+    background: var(--bg-card);
+    color: var(--text);
+    border: 1px solid var(--border);
+
+    &:hover:not(:disabled) { background: var(--bg-subtle); border-color: #cbd5e1; }
+  }
+}
+
 .logout-btn {
   padding: 7px 14px;
   font-size: 0.82rem;
