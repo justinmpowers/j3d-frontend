@@ -7,22 +7,24 @@ import { OrderService } from 'services/order.service';
 import { FilamentService } from 'services/filament.service';
 import { PrinterService, Printer } from 'services/printer.service';
 import { AlertsService, AlertSettings } from 'services/alerts.service';
+import { ManyfoldService, ManyfoldSettings } from 'services/manyfold.service';
 import { Order, Filament, ProductProfile, OrderNote, CommunicationLog } from 'models/types';
 import { AnalyticsComponent } from 'components/analytics/analytics.component';
 import { ProductionComponent } from 'components/production/production.component';
 import { PrinterManagementComponent } from 'components/printer-management/printer-management.component';
+import { ManyfoldPickerComponent } from 'components/manyfold-picker/manyfold-picker.component';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'environments/environment';
 
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, FormsModule, AnalyticsComponent, ProductionComponent, PrinterManagementComponent],
+    imports: [CommonModule, FormsModule, AnalyticsComponent, ProductionComponent, PrinterManagementComponent, ManyfoldPickerComponent],
     templateUrl: './dashboard.component.html',
     styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
-    activeTab: 'orders' | 'filaments' | 'analytics' | 'products' | 'production' | 'printers' = 'orders';
+    activeTab: 'orders' | 'filaments' | 'analytics' | 'products' | 'production' | 'printers' | 'integrations' = 'orders';
     orders: Order[] = [];
     selectedOrders: Set<number> = new Set();
     orderFilters: {
@@ -61,6 +63,8 @@ export class DashboardComponent implements OnInit {
     linkShopError = '';
     syncingOrders = false;
     autoSyncComplete = false;
+    syncingProducts = false;
+    etsyNeedsReconnect = false;
     showAddFilament = false;
     showAddProduct = false;
     editingFilament: Filament | null = null;
@@ -96,6 +100,11 @@ export class DashboardComponent implements OnInit {
         suggested_price: null as number | null
     };
 
+    manyfoldSettings: ManyfoldSettings = { user_id: 0, base_url: null, client_id: null, has_client_secret: false };
+    manyfoldForm = { base_url: '', client_id: '', client_secret: '' };
+    savingManyfoldSettings = false;
+    linkingProduct: ProductProfile | null = null;
+
     constructor(
         private authService: AuthService,
         private orderService: OrderService,
@@ -104,6 +113,7 @@ export class DashboardComponent implements OnInit {
         private http: HttpClient,
             private printerService: PrinterService,
             private alertsService: AlertsService,
+            private manyfoldService: ManyfoldService,
             private cdr: ChangeDetectorRef
     ) { }
 
@@ -125,7 +135,8 @@ export class DashboardComponent implements OnInit {
         this.loadOrders();
         this.loadFilaments();
         this.loadProductProfiles();
-        
+        this.loadManyfoldSettings();
+
         // Auto-sync orders on initial load
         this.autoSyncOrders();
 
@@ -415,6 +426,93 @@ export class DashboardComponent implements OnInit {
                 console.error('Error syncing orders:', error);
                 alert('Failed to sync orders');
             }
+        });
+    }
+
+    syncEtsyListings(): void {
+        this.syncingProducts = true;
+        this.http.post<{ success: boolean; needs_reconnect?: boolean; error?: string; message?: string }>(
+            `${environment.apiUrl}/products/sync-etsy`, {}
+        ).subscribe({
+            next: (response) => {
+                this.syncingProducts = false;
+                if (response.needs_reconnect) {
+                    this.etsyNeedsReconnect = true;
+                    alert(response.error || 'Please reconnect your Etsy account to sync listings.');
+                    return;
+                }
+                this.etsyNeedsReconnect = false;
+                this.loadProductProfiles();
+                alert(response.message || 'Products synced successfully!');
+            },
+            error: (error) => {
+                this.syncingProducts = false;
+                if (error.error?.needs_reconnect) {
+                    this.etsyNeedsReconnect = true;
+                }
+                console.error('Error syncing Etsy listings:', error);
+                alert(error.error?.error || 'Failed to sync products from Etsy');
+            }
+        });
+    }
+
+    reconnectEtsy(): void {
+        this.authService.getLoginUrl().subscribe(response => {
+            if (response.auth_url && response.code_verifier) {
+                sessionStorage.setItem('oauth_code_verifier', response.code_verifier);
+                window.location.href = response.auth_url;
+            }
+        });
+    }
+
+    loadManyfoldSettings(): void {
+        this.manyfoldService.getSettings().subscribe({
+            next: (settings) => {
+                this.manyfoldSettings = settings;
+                this.manyfoldForm.base_url = settings.base_url || '';
+                this.manyfoldForm.client_id = settings.client_id || '';
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
+    saveManyfoldSettings(): void {
+        this.savingManyfoldSettings = true;
+        this.manyfoldService.updateSettings(
+            this.manyfoldForm.base_url,
+            this.manyfoldForm.client_id,
+            this.manyfoldForm.client_secret || undefined
+        ).subscribe({
+            next: (settings) => {
+                this.savingManyfoldSettings = false;
+                this.manyfoldSettings = settings;
+                this.manyfoldForm.client_secret = '';
+                alert('Manyfold settings saved.');
+            },
+            error: (error) => {
+                this.savingManyfoldSettings = false;
+                alert(error.error?.error || 'Failed to save Manyfold settings');
+            }
+        });
+    }
+
+    openManyfoldPicker(product: ProductProfile): void {
+        this.linkingProduct = product;
+    }
+
+    closeManyfoldPicker(): void {
+        this.linkingProduct = null;
+    }
+
+    onManyfoldLinked(): void {
+        this.linkingProduct = null;
+        this.loadProductProfiles();
+    }
+
+    unlinkManyfold(product: ProductProfile): void {
+        this.manyfoldService.unlinkModel(product.id).subscribe({
+            next: () => this.loadProductProfiles(),
+            error: () => alert('Failed to unlink Manyfold model')
         });
     }
 

@@ -116,7 +116,7 @@
 }
 .dot-green  { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
 .dot-red    { background: var(--danger);  box-shadow: 0 0 6px rgba(239,68,68,0.5); }
-.dot-gray   { background: #94a3b8; }
+.dot-gray   { background: var(--text-light); }
 .dot-yellow { background: var(--warning); box-shadow: 0 0 6px rgba(245,158,11,0.5); animation: blink 1.5s ease infinite; }
 
 @keyframes blink {
@@ -180,7 +180,7 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.15s;
-  &:hover { background: #fee2e2; }
+  &:hover { background: var(--danger-light); }
 }
 
 /* ===== Info Grid ===== */

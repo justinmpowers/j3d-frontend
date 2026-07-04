@@ -1,0 +1,44 @@
+<div class="modal" (click)="close()">
+  <div class="modal-content picker-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Link to Manyfold</h3>
+      <button class="close-btn" (click)="close()">&times;</button>
+    </div>
+
+    <p class="picker-hint">Manyfold doesn't support text search &mdash; narrow by creator, page through results, or filter the current page below.</p>
+
+    <div class="picker-filters">
+      <select [(ngModel)]="selectedCreatorId" (ngModelChange)="onCreatorChange()">
+        <option value="">All creators</option>
+        <option *ngFor="let creator of creators" [value]="creator['@id']">{{ creator.name }}</option>
+      </select>
+      <input type="text" [(ngModel)]="filterText" placeholder="Filter this page by name...">
+    </div>
+
+    <div *ngIf="error" class="alert-error">{{ error }}</div>
+
+    <div *ngIf="loading" class="picker-loading">Loading models...</div>
+
+    <div *ngIf="!loading" class="picker-list">
+      <button
+        type="button"
+        class="picker-item"
+        *ngFor="let model of filteredModels"
+        [disabled]="linking"
+        (click)="selectModel(model)">
+        {{ model.name }}
+      </button>
+      <p *ngIf="filteredModels.length === 0" class="empty-state">No models found on this page.</p>
+    </div>
+
+    <div class="picker-pagination">
+      <button (click)="prevPage()" [disabled]="page <= 1 || loading">&laquo; Prev</button>
+      <span>Page {{ page }}</span>
+      <button (click)="nextPage()" [disabled]="!hasNextPage || loading">Next &raquo;</button>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="close()">Cancel</button>
+    </div>
+  </div>
+</div>

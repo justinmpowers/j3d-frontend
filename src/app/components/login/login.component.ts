@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -10,13 +10,19 @@ import { AuthService } from '../../services/auth.service';
     templateUrl: './login.component.html',
     styleUrls: ['./login.component.scss'],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
     loading = false;
+    loggedOutForInactivity = false;
 
     constructor(
         private authService: AuthService,
-        private router: Router
+        private router: Router,
+        private route: ActivatedRoute
     ) { }
+
+    ngOnInit(): void {
+        this.loggedOutForInactivity = this.route.snapshot.queryParamMap.get('reason') === 'idle';
+    }
 
     loginWithEtsy(): void {
         this.loading = true;

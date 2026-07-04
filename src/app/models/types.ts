@@ -118,6 +118,15 @@ export interface ProductProfile {
   overhead_cost?: number | null;
   target_margin_pct?: number | null;
   suggested_price?: number | null;
+  etsy_listing_id?: string | null;
+  etsy_url?: string | null;
+  etsy_thumbnail_url?: string | null;
+  etsy_price?: number | null;
+  etsy_quantity?: number | null;
+  etsy_state?: string | null;
+  etsy_last_synced_at?: string | null;
+  manyfold_model_id?: string | null;
+  manyfold_model_url?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -3,6 +3,10 @@
         <h1>J3D - Etsy Orders & Filament Tracker</h1>
         <p class="subtitle">Manage your Etsy orders and filament inventory</p>
 
+        <p class="idle-notice" *ngIf="loggedOutForInactivity">
+            You were logged out after a period of inactivity. Please log in again.
+        </p>
+
         <button class="login-btn" (click)="loginWithEtsy()" [disabled]="loading">
             {{ loading ? 'Redirecting to Etsy...' : 'Login with Etsy' }}
         </button>
